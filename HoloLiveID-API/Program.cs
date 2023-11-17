@@ -1,4 +1,5 @@
 using HoloLiveID_API.Data;
+using HoloLiveID_API.Helper;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ var cosmosIdentityDbName = builder.Configuration.GetValue<string>("DB");
 builder.Services.AddDbContext<HoloLiveIDContext>(options =>
   options.UseCosmos(connectionString, cosmosIdentityDbName)
 );
+builder.Services.AddScoped<HoloUserHelper>();
 
 var app = builder.Build();
 

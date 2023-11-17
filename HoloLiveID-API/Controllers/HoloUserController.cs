@@ -1,6 +1,8 @@
 ﻿using HoloLiveID_API.Data;
+using HoloLiveID_API.Helper;
 using HoloLiveID_API.Input;
 using HoloLiveID_API.Model;
+using HoloLiveID_API.Output;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,113 +13,80 @@ namespace HoloLiveID_API.Controllers
     [Route("hololive")]
     public class HoloUserController : ControllerBase
     {
-        private readonly HoloLiveIDContext _dbContext;
-        private static bool _ensureCreated { get; set; } = false;
-
-        public HoloUserController(HoloLiveIDContext dbContext)
+        private HoloUserHelper holoUserHelper;
+        public HoloUserController(HoloUserHelper holoUserHelper)
         {
-            _dbContext = dbContext;
-
-            if (!_ensureCreated)
-            {
-                _dbContext.Database.EnsureCreated();
-                _ensureCreated = true;
-            }
+            this.holoUserHelper = holoUserHelper;
         }
 
-        [HttpGet("user")]
+        [HttpGet]
         [Produces("application/json")]
-        public async Task<IActionResult> GetUsers()
-        {
-            return Ok(await _dbContext.HoloUsers.ToListAsync());
-        }
-
-        [HttpGet("user/{id}")]
-        [Produces("application/json")]
-        public async Task<IActionResult> GetUser(string id)
-        {
-            var user = await _dbContext.HoloUsers
-                .Where(x => x.HoloId.Equals(id, StringComparison.OrdinalIgnoreCase))
-                .FirstOrDefaultAsync();
-
-            if (user != null)
-            {
-                return Ok(user);
-            }
-
-            return NotFound("User is not exist");
-        }
-
-        [HttpPost("user")]
-        [Produces("application/json")]
-        public async Task<IActionResult> CreateUser([FromBody] HoloUser data)
-        {
-            var newHoloUser = new HoloUser
-            {
-                HoloId = data.HoloId,
-                Name = data.Name,
-                Gen = data.Gen,
-                Description = data.Description,
-                Birthdate = data.Birthdate,
-                Height = data.Height,
-                Zodiac = data.Zodiac,
-            };
-
-            _dbContext.HoloUsers.Add(newHoloUser);
-            await _dbContext.SaveChangesAsync();
-
-            return Ok();
-        }
-
-        [HttpPatch("user/{id}")]
-        [Produces("application/json")]
-        public async Task<IActionResult> UpdateUser(string id, [FromBody] HoloUserInput data)
+        public async Task<IActionResult> GetAll()
         {
             try
             {
-                var user = await _dbContext.HoloUsers
-                    .Where(x => x.HoloId.Equals(id, StringComparison.OrdinalIgnoreCase))
-                    .FirstOrDefaultAsync();
-
-                if (user != null)
-                {
-                    user.Name = data.Name ?? user.Name;
-                    user.Gen = data.Gen ?? user.Gen;
-                    user.Description = data.Description ?? user.Description;
-                    user.Birthdate = data.Birthdate ?? user.Birthdate;
-                    user.Height = data.Height ?? user.Height;
-                    user.Zodiac = data.Zodiac ?? user.Zodiac;
-
-                    _dbContext.HoloUsers.Update(user);
-                    await _dbContext.SaveChangesAsync();
-
-                    return Ok();
-                }
-
-                return NotFound("User is not exist");
+                var objJSON = new ListHoloUserOutput();
+                objJSON.payload = holoUserHelper.GetAllUsers();
+                return new OkObjectResult(objJSON);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.InnerException, stackTrace = ex.StackTrace });
+                return BadRequest(ex.Message);
             }
         }
 
-        [HttpDelete("user/{id}")]
+        [HttpGet("{id}")]
         [Produces("application/json")]
-        public async Task<IActionResult> DeleteUser(string id)
+        public async Task<IActionResult> Get(string id)
         {
-            var user = await _dbContext.HoloUsers
-                .Where(x => x.HoloId.Equals(id, StringComparison.OrdinalIgnoreCase))
-                .FirstOrDefaultAsync();
-
-            if (user != null)
+            try
             {
-                _dbContext.HoloUsers.Remove(user);
-                await _dbContext.SaveChangesAsync();
-                return Ok();
+                var objJSON = new HoloUserOutput();
+                objJSON.payload = holoUserHelper.GetUser(id);
+                return new OkObjectResult(objJSON);
             }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }   
+        }
 
-            return NotFound("User is not exist");
+        [HttpPost]
+        [Produces("application/json")]
+        public async Task<IActionResult> Create([FromBody] HoloUser data)
+        {
+            try
+            {
+                var objJSON = holoUserHelper.CreateUser(data);
+                return new OkObjectResult(objJSON);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPatch("{id}")]
+        [Produces("application/json")]
+        public async Task<IActionResult> Update(string id, [FromBody] HoloUserInput data)
+        {
+            try
+            {
+                var objJSON = holoUserHelper.UpdateUser(id, data);
+                return new OkObjectResult(objJSON);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [Produces("application/json")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            var objJSON = holoUserHelper.DeleteUser(id);
+            return new OkObjectResult(objJSON);
         }
     }
 }
