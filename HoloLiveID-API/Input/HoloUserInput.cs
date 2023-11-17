@@ -1,13 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.Azure.Cosmos;
-
-namespace HoloLiveID_API.Model
+﻿namespace HoloLiveID_API.Input
 {
-    public class HoloUser
+    public class HoloUserInput
     {
-        [Key]
-        public string HoloId { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public int? Gen { get; set; }
         public string? Description { get; set; }
         public string? Birthdate { get; set; }

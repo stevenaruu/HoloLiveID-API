@@ -16,7 +16,7 @@ namespace HoloLiveID_API.Data
 
             builder.Entity<HoloUser>()
              .ToContainer(nameof(HoloUser))
-             .HasPartitionKey(c => c.Id)
+             .HasPartitionKey(c => c.HoloId)
              .HasNoDiscriminator();
         }
     }
